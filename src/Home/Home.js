@@ -10,9 +10,12 @@ import { TextInput } from "react-native-gesture-handler";
 
 import findIcon from "../../assets/images/magnifyingglass.png"
 
+import { useDispatch } from 'react-redux';
+import { useNavigation } from '@react-navigation/native';
+
 export default function Home() {
 
-    const [input, setInput] = useState("Fabio")
+    const [input, setInput] = useState("")
     const [data, setData] = useState(null)
     const [loading, setLoading] = useState(false)
     const [finalList, setFinalList] = useState(false)
@@ -24,10 +27,10 @@ export default function Home() {
             setLoading(true)
             setFinalList(false)
             api.get(`search/repositories?q=${input}&per_page=20`).then(response => {
-               var items = response.data.items;
+               var items = response?.data?.items;
                setData(items)
                
-               if(response.data.items.length < 20) {
+               if(response?.data?.items?.length < 20) {
                 setFinalList(true)
                } else {
                 setPage(page + 1)
@@ -41,26 +44,58 @@ export default function Home() {
     }
 
     const readMoreRepo = () => {
+        if(!finalList) {
+            setLoading(true)
+            api.get(`search/repositories?q=${input}&per_page=20&page=${page}`).then(response => {
+    
+                var items = response?.data.items || {};
+
+                if(items.length < 20) {
+                    setFinalList(true)
+                }
+
+                var newData = [...data, ...items];
+            
+                setData(newData)
+                setPage(page + 1)
+              }).catch(e => {
+                console.log('error: ' + e)
+              }).finally(() => {
+                setLoading(false)
+              })       
+
+        }
     }
 
     const RepoItem = ({data}) => {
 
+        const dispatch = useDispatch()
+        const navigation = useNavigation()
+      
+        async function dispatchRepo() {
+          dispatch({
+            type: 'REPOSITORY_SAGA_SUCCESS',
+            payload: { owner: data.owner.login, name: data.name }
+          })
+          navigation.navigate('Details')
+        }
+
         return (
             <ContainerItem
-            onPress={{}}
+            onPress={dispatchRepo}
             >
             <ContainerAvatarTitle>
                 <Avatar
                 testID='avatar'
                 source={{
-                    uri: data.owner.avatar_url,
+                    uri: data?.owner?.avatar_url || "",
                 }} />
                 <TitleContainer>
-                <TitleItem testID='name'>{data.name}</TitleItem>
-                <Subtitle testID='owner'>{data.owner.login}</Subtitle>
+                <TitleItem testID='name'>{data?.name || ""}</TitleItem>
+                <Subtitle testID='owner'>{data?.owner?.login || ""}</Subtitle>
                 </TitleContainer>
             </ContainerAvatarTitle>
-            <NumOfStar testID='stars'>{data.stargazers_count}</NumOfStar>
+            <NumOfStar testID='stars'>{data?.stargazers_count || 0}</NumOfStar>
             </ContainerItem>
         )
     }
