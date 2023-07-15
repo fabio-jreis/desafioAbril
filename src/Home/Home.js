@@ -95,7 +95,7 @@ export default function Home() {
                 <Subtitle testID='owner'>{data?.owner?.login || ""}</Subtitle>
                 </TitleContainer>
             </ContainerAvatarTitle>
-            <NumOfStar testID='stars'>{data?.stargazers_count || 0}</NumOfStar>
+            <NumOfStar testID='stars'>{data?.stargazers_count || 0} stars</NumOfStar>
             </ContainerItem>
         )
     }
